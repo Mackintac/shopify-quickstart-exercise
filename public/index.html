@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Shopify API Demo</title>
+  </head>
+  <body>
+    <h1>Shopify API Demo</h1>
+    <select id="productSelect"></select>
+
+    <form id="editForm">
+      <input type="text" id="title" placeholder="New Title" required />
+      <input type="text" id="price" placeholder="New Price" required />
+      <button type="submit">Update Product</button>
+    </form>
+
+    <p id="status"></p>
+
+    <script>
+      let selectedProductId = null;
+
+      async function loadProducts() {
+        const res = await fetch('/products');
+        const products = await res.json();
+        const select = document.getElementById('productSelect');
+
+        products.forEach((p) => {
+          const option = document.createElement('option');
+          option.value = p.id;
+          option.textContent = `${p.title} - $${p.variants[0].price}`;
+          select.appendChild(option);
+        });
+
+        select.addEventListener('change', () => {
+          selectedProductId = select.value;
+        });
+
+        if (products.length > 0) {
+          selectedProductId = products[0].id;
+          select.value = selectedProductId;
+        }
+      }
+
+      document
+        .getElementById('editForm')
+        .addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const title = document.getElementById('title').value;
+          const price = document.getElementById('price').value;
+
+          const res = await fetch('/update-product', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: selectedProductId, title, price }),
+          });
+
+          if (res.ok) {
+            document.getElementById('status').textContent = 'Product updated!';
+            await loadProducts();
+          } else {
+            document.getElementById('status').textContent = 'Update failed!';
+          }
+        });
+
+      loadProducts();
+    </script>
+  </body>
+</html>
